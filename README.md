@@ -1,6 +1,6 @@
 # DCYF ELMS SCRAPER
 
-Paste your ELMS cookie into `Del_Auth.txt`.
+Paste your ELMS cookie into `del_auth.txt`.
 
 Paste child ID Numbers in a "#####,######,#####" format in `elms_ids.txt`
 
