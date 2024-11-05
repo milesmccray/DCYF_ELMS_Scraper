@@ -4,6 +4,6 @@ Paste your ELMS cookie into `Del_Auth.txt`.
 
 Paste child ID Numbers in a "#####,######,#####" format in `elms_ids.txt`
 
-Once program is run produces a child_data.json
+Once program is run, it produces `child_data.json`
 
 If there is any Errors likley need to update cookie
