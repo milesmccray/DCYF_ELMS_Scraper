@@ -101,7 +101,10 @@ class ChildData:
 
     def run(self):
         # Run the loop to fetch data
+        x = 1
         for child_id in self.elms_ids:
+            print(f'child #{x}')
+            x += 1
             self.reset_data()
             self.child_id = child_id
             self.count = 0
@@ -259,8 +262,8 @@ class ChildData:
         # Convert List to dictionary
         if len(pt_list) > 0:
             for count, info in enumerate(pt_list, start=1):  # P/T Conference
-                self.pt_dict[str(count) + '-PT_Conference'] = {'date': info[0], 'location': info[1], 'description':
-                    info[2]}
+                    self.pt_dict[str(count) + '-PT_Conference'] = {'date': info[0], 'location': info[1], 'description':
+                        info[2]}
         else:
             self.pt_dict['1-PT_Conference'] = 'N/A'
 
