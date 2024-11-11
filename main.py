@@ -3,6 +3,8 @@ import json
 from bs4 import BeautifulSoup
 
 
+# THIS CODE IS WRITTEN HORRIBLY SINCE IT WEB SCRAPES AND I RUSHED, BUT IT WORKS AS OF 11/10/24
+
 class ChildData:
     def __init__(self):
         with open('del_auth.txt', 'r') as f:
@@ -46,6 +48,9 @@ class ChildData:
         self.asq_date = None
         self.asq_result = None
         self.asq_rescreen = None
+        self.asq_date_ee = None
+        self.asq_result_ee = None
+        self.asq_rescreen_ee = None
         self.iep_start = None
         self.iep_active = None
         self.iep_end = None
@@ -133,13 +138,17 @@ class ChildData:
 
     def household_tab(self, raw_html):
         soup = BeautifulSoup(raw_html, 'html.parser')
-        f_name = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtFirstName'}).get('value')
-        l_name = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtLastName'}).get('value')
-        birth_date = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtBirthDate'}).get('value')
+        try:
+            f_name = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtFirstName'}).get('value')
+            l_name = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtLastName'}).get('value')
+            birth_date = soup.find('input', {'name': 'ctl00$ctl00$phb$phb$txtBirthDate'}).get('value')
 
-        self.f_name = f_name
-        self.l_name = l_name
-        self.b_date = birth_date
+            self.f_name = f_name
+            self.l_name = l_name
+            self.b_date = birth_date
+        except AttributeError:
+            print('ERROR: Update del_auth.txt with new cookie || Possibly html changed')
+            quit()
 
     def medical_tab(self, raw_html):
         soup = BeautifulSoup(raw_html, 'html.parser')
@@ -154,8 +163,9 @@ class ChildData:
                 wc_date = 'N/A'
 
         # Immunization Status
-        elms_immu = soup.find_all('option', {'selected': 'selected'})[2].get('value')  # 3rd instance in HTML
-        # Check what the value is from find_all [2] and assign correct string
+        elms_immu = soup.find('select', {'id': 'phb_phb_ddlImmunizationCurrentStatus'}).find(
+            'option', {'selected': 'selected'}).get('value')
+
         if elms_immu == '1':
             elms_immu = 'Complete'
         if elms_immu == '2':
@@ -168,6 +178,8 @@ class ChildData:
             elms_immu = 'Out of Compliance - Child is not complete or Immune'
         if elms_immu == '6':
             elms_immu = 'CIS or IIS not evaluated'
+        if elms_immu is None:
+            elms_immu = 'N/A'
 
         self.wc_date = wc_date
         self.immunization = elms_immu
@@ -231,10 +243,29 @@ class ChildData:
         soup = BeautifulSoup(raw_html, 'html.parser')
 
         # ASQ
-        raw_asq_info = list(soup.find_all('table')[0].find_all('td', limit=3))
-        self.asq_date = raw_asq_info[0].text.strip()
-        self.asq_result = raw_asq_info[1].text.strip()
-        self.asq_rescreen = raw_asq_info[2].text.strip()
+        try:
+            raw_asq_info = list(
+                soup.find('table', {'id': 'phb_phb_grdDevelopmentalScreening'}).find_all('td', limit=3))
+            self.asq_date = raw_asq_info[0].text.strip()
+            self.asq_result = raw_asq_info[1].text.strip()
+            self.asq_rescreen = raw_asq_info[2].text.strip()
+
+        except (AttributeError, IndexError):
+            self.asq_date = 'N/A'
+            self.asq_result = 'N/A'
+            self.asq_rescreen = 'N/A'
+
+        try:
+            raw_asq_info_ee = list(
+                soup.find('table', {'id': 'phb_phb_grdEarlyDevelopmentalScreening'}).find_all('td', limit=3))
+            self.asq_date_ee = raw_asq_info_ee[0].text.strip()
+            self.asq_result_ee = raw_asq_info_ee[1].text.strip()
+            self.asq_rescreen_ee = raw_asq_info_ee[2].text.strip()
+
+        except (AttributeError, IndexError):
+            self.asq_date_ee = 'N/A'
+            self.asq_result_ee = 'N/A'
+            self.asq_rescreen_ee = 'N/A'
 
         # IEP
         self.iep_start = 'N/A'
@@ -249,7 +280,8 @@ class ChildData:
 
         # P/T Conference
         pt_list = []
-        raw_pt_info = list(soup.find_all('table')[2].find_all('tr'))
+        raw_pt_info = list(soup.find('table', {'id': 'phb_phb_parentTeachConferences_grdChildMeeting'}).find_all(
+            'tr'))
         del raw_pt_info[0]  # Removes dead <tr> tag from html
         for visit in raw_pt_info:
             temp_list = []
@@ -262,8 +294,8 @@ class ChildData:
         # Convert List to dictionary
         if len(pt_list) > 0:
             for count, info in enumerate(pt_list, start=1):  # P/T Conference
-                    self.pt_dict[str(count) + '-PT_Conference'] = {'date': info[0], 'location': info[1], 'description':
-                        info[2]}
+                self.pt_dict[str(count) + '-PT_Conference'] = {'date': info[0], 'location': info[1], 'description':
+                    info[2]}
         else:
             self.pt_dict['1-PT_Conference'] = 'N/A'
 
@@ -355,7 +387,8 @@ class ChildData:
                                              'referral_hearing': self.hearing_referral,
                                              'followup_hearing': self.hearing_followup}},
             'CHILD_DEVELOPMENT': {'ASQ': {'asq_date': self.asq_date, 'asq_result': self.asq_result,
-                                          'asq_rescreen': self.asq_rescreen},
+                                          'asq_rescreen': self.asq_rescreen, 'asq_date_ee': self.asq_date_ee,
+                                          'asq_result_ee': self.asq_result_ee, 'asq_rescreen_ee': self.asq_rescreen_ee},
                                   'IEP': {'iep_start': self.iep_start, 'iep_active': self.iep_active,
                                           'iep_end': self.iep_end},
                                   'PT_CONFERENCE': self.pt_dict},
