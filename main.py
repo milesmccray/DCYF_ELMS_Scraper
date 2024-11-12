@@ -51,6 +51,9 @@ class ChildData:
         self.asq_date_ee = None
         self.asq_result_ee = None
         self.asq_rescreen_ee = None
+        self.ifsp_start = None
+        self.ifsp_active = None
+        self.ifsp_end = None
         self.iep_start = None
         self.iep_active = None
         self.iep_end = None
@@ -117,7 +120,7 @@ class ChildData:
                 self.count += 1
                 self.get_html(url + child_id)
 
-            self.build_child_data()
+            self.build_child_data2()
 
     def get_html(self, url):
         raw_html = requests.get(url, cookies=self.cookie)
@@ -158,7 +161,7 @@ class ChildData:
                             {'name': 'ctl00$ctl00$phb$phb$WellChildECEAPUpdateControl1$txtExamDate'}).get('value')
         if wc_date is None:
             try:
-                wc_date = soup.find('span', {'id': 'phb_phb_lblWellExamChildLastYear'}).text
+                wc_date = soup.find('input', {'id': 'phb_phb_txtWellCheckExam'}).get('value')
             except AttributeError:
                 wc_date = 'N/A'
 
@@ -267,16 +270,26 @@ class ChildData:
             self.asq_result_ee = 'N/A'
             self.asq_rescreen_ee = 'N/A'
 
+        # IFSP
+        self.ifsp_start = 'N/A'
+        self.ifsp_active = 'N/A'
+        self.ifsp_end = 'N/A'
+        raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIFSP'}).find_all('td'))
+        if len(raw_iep_info) > 1:
+            self.ifsp_start = raw_iep_info[0].text.strip()
+            self.ifsp_active = raw_iep_info[2].text.strip()
+            self.ifsp_end = raw_iep_info[3].text.strip()
+
         # IEP
         self.iep_start = 'N/A'
         self.iep_active = 'N/A'
         self.iep_end = 'N/A'
 
-        raw_iep_info = list(soup.find_all('table')[1].find_all('td'))
+        raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIep'}).find_all('td'))
         if len(raw_iep_info) > 1:
             self.iep_start = raw_iep_info[0].text.strip()
-            self.iep_active = raw_iep_info[3].text.strip()
-            self.iep_end = raw_iep_info[4].text.strip()
+            self.iep_active = raw_iep_info[2].text.strip()
+            self.iep_end = raw_iep_info[3].text.strip()
 
         # P/T Conference
         pt_list = []
@@ -293,6 +306,11 @@ class ChildData:
 
         # Convert List to dictionary
         if len(pt_list) > 0:
+            while True:  # Trim list
+                if len(pt_list) > 4:
+                    del pt_list[-1]
+                else:
+                    break
             for count, info in enumerate(pt_list, start=1):  # P/T Conference
                 self.pt_dict[str(count) + '-PT_Conference'] = {'date': info[0], 'location': info[1], 'description':
                     info[2]}
@@ -321,15 +339,20 @@ class ChildData:
                 hv_list.append(interaction)
             monthly_contact_list.append(interaction[0])
 
-        # Only shows last 6 monthly contacts
+        # Only shows last 4 monthly contacts
         while True:
-            if len(monthly_contact_list) > 6:
+            if len(monthly_contact_list) > 4:
                 del monthly_contact_list[-1:]
             else:
                 break
 
         # Convert List into Dict
         if len(hv_list) > 0:
+            while True:  # Trim list
+                if len(hv_list) > 4:
+                    del hv_list[-1]
+                else:
+                    break
             for count, info in enumerate(hv_list, start=1):  # Home visits
                 self.hv_dict[str(count) + '-HomeVisit'] = {'date': info[0], 'teacher': info[1], 'location': info[2],
                                                            'topic': info[3], 'description': info[4]}
@@ -374,6 +397,36 @@ class ChildData:
         else:
             self.family_goal = 'No'
 
+    def build_child_data2(self):
+        self.child_data[f'{self.l_name},{self.f_name}'] = {
+            'GENERAL': {'last': self.l_name, 'first': self.f_name, 'birthdate': self.b_date, 'id': self.child_id},
+            'EDUCATION': {'IMMUNIZATION': self.immunization,
+                          'ASQ': {'asq_date': self.asq_date, 'asq_result': self.asq_result,
+                                  'asq_rescreen': self.asq_rescreen, 'asq_date_ee': self.asq_date_ee,
+                                  'asq_result_ee': self.asq_result_ee, 'asq_rescreen_ee': self.asq_rescreen_ee},
+                          'IFSP': {'ifsp_start': self.ifsp_start, 'ifsp_end': self.ifsp_end,
+                                   'ifsp_active': self.ifsp_active},
+                          'IEP': {'iep_start': self.iep_start, 'iep_end': self.iep_end,
+                                  'iep_active': self.iep_active},
+                          'PT_CONFERENCE': self.pt_dict},
+            'FAMILY': {'MEDICAL': {'well_child': self.wc_date},
+                      'DENTAL': {'dental': self.de_date},
+                      'HEALTH_SCREENING': {'VISION': {'past_vision': self.vision_past,
+                                                      'current_vision': self.vision_current,
+                                                      'referral_vision': self.vision_referral,
+                                                      'followup_vision(ref/fail)': self.vision_followup},
+                                           'HEARING': {'past_hearing': self.hearing_past,
+                                                       'current_hearing': self.hearing_current,
+                                                       'referral_hearing': self.hearing_referral,
+                                                       'followup_hearing(ref/fail)': self.hearing_followup}},
+                      'FAMILY_INFORMATION': {'MONTHLY_CONTACT': self.monthly_contact_dict,
+                                             'HOME_VISITS': self.hv_dict},
+                      'MOBILITY_INFORMATION': {'pre_assessment': self.pre_assessment,
+                                               'post_assessment': self.post_assessment,
+                                               'on_another_child': self.on_another_child,
+                                               'FAMILY_GOALS': {'opt_out': self.opt_out, 'family_goal':
+                                                   self.family_goal}}}}
+
     def build_child_data(self):
         self.child_data[f'{self.l_name},{self.f_name}'] = {
             'GENERAL': {'last': self.l_name, 'first': self.f_name, 'birthdate': self.b_date, 'id': self.child_id},
@@ -381,16 +434,18 @@ class ChildData:
             'DENTAL': {'dental': self.de_date},
             'HEALTH_SCREENING': {'VISION': {'past_vision': self.vision_past, 'current_vision': self.vision_current,
                                             'referral_vision': self.vision_referral,
-                                            'followup_vision': self.vision_followup},
+                                            'followup_vision(ref/fail)': self.vision_followup},
                                  'HEARING': {'past_hearing': self.hearing_past,
                                              'current_hearing': self.hearing_current,
                                              'referral_hearing': self.hearing_referral,
-                                             'followup_hearing': self.hearing_followup}},
+                                             'followup_hearing(ref/fail)': self.hearing_followup}},
             'CHILD_DEVELOPMENT': {'ASQ': {'asq_date': self.asq_date, 'asq_result': self.asq_result,
                                           'asq_rescreen': self.asq_rescreen, 'asq_date_ee': self.asq_date_ee,
                                           'asq_result_ee': self.asq_result_ee, 'asq_rescreen_ee': self.asq_rescreen_ee},
-                                  'IEP': {'iep_start': self.iep_start, 'iep_active': self.iep_active,
-                                          'iep_end': self.iep_end},
+                                  'IFSP': {'ifsp_start': self.ifsp_start, 'ifsp_end': self.ifsp_end,
+                                          'ifsp_active': self.ifsp_active},
+                                  'IEP': {'iep_start': self.iep_start, 'iep_end': self.iep_end,
+                                          'iep_active': self.iep_active},
                                   'PT_CONFERENCE': self.pt_dict},
             'FAMILY_INFORMATION': {'HOME_VISITS': self.hv_dict,
                                    'MONTHLY_CONTACT': self.monthly_contact_dict},
