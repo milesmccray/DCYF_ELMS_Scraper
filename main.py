@@ -274,22 +274,27 @@ class ChildData:
         self.ifsp_start = 'N/A'
         self.ifsp_active = 'N/A'
         self.ifsp_end = 'N/A'
-        raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIFSP'}).find_all('td'))
-        if len(raw_iep_info) > 1:
-            self.ifsp_start = raw_iep_info[0].text.strip()
-            self.ifsp_active = raw_iep_info[2].text.strip()
-            self.ifsp_end = raw_iep_info[3].text.strip()
+        try:
+            raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIFSP'}).find_all('td'))
+            if len(raw_iep_info) > 1:
+                self.ifsp_start = raw_iep_info[0].text.strip()
+                self.ifsp_active = raw_iep_info[2].text.strip()
+                self.ifsp_end = raw_iep_info[3].text.strip()
+        except AttributeError:
+            pass
 
         # IEP
         self.iep_start = 'N/A'
         self.iep_active = 'N/A'
         self.iep_end = 'N/A'
-
-        raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIep'}).find_all('td'))
-        if len(raw_iep_info) > 1:
-            self.iep_start = raw_iep_info[0].text.strip()
-            self.iep_active = raw_iep_info[2].text.strip()
-            self.iep_end = raw_iep_info[3].text.strip()
+        try:
+            raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIep'}).find_all('td'))
+            if len(raw_iep_info) > 1:
+                self.iep_start = raw_iep_info[0].text.strip()
+                self.iep_active = raw_iep_info[2].text.strip()
+                self.iep_end = raw_iep_info[3].text.strip()
+        except AttributeError:
+            pass
 
         # P/T Conference
         pt_list = []
