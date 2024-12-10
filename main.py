@@ -157,13 +157,19 @@ class ChildData:
         soup = BeautifulSoup(raw_html, 'html.parser')
 
         # WC Date
-        wc_date = soup.find('input',
+        try:
+            wc_date = soup.find('input',
                             {'name': 'ctl00$ctl00$phb$phb$WellChildECEAPUpdateControl1$txtExamDate'}).get('value')
+
+        except AttributeError:
+            wc_date = 'declined'
+        
         if wc_date is None:
             try:
-                wc_date = soup.find('input', {'id': 'phb_phb_txtWellCheckExam'}).get('value')
+                wc_date = soup.find('input', {'id': 'phb_phb_lblWellExamChildLastYear'}).get('value')
             except AttributeError:
                 wc_date = 'N/A'
+
 
         # Immunization Status
         elms_immu = soup.find('select', {'id': 'phb_phb_ddlImmunizationCurrentStatus'}).find(
@@ -191,8 +197,12 @@ class ChildData:
         soup = BeautifulSoup(raw_html, 'html.parser')
 
         # DE Date
-        de_date = soup.find('input',
+        try:
+            de_date = soup.find('input',
                             {'name': 'ctl00$ctl00$phb$phb$WellChildECEAPUpdateControl1$txtExamDate'}).get('value')
+        except AttributeError:
+            de_date = 'declined'
+
         if de_date is None:
             try:
                 de_date = soup.find('span', {'id': 'phb_phb_lblDentalExamLastYear'}).text
