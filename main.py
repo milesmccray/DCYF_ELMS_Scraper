@@ -288,8 +288,8 @@ class ChildData:
             raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIFSP'}).find_all('td'))
             if len(raw_iep_info) > 1:
                 self.ifsp_start = raw_iep_info[0].text.strip()
-                self.ifsp_active = raw_iep_info[2].text.strip()
-                self.ifsp_end = raw_iep_info[3].text.strip()
+                self.ifsp_active = raw_iep_info[3].text.strip()
+                self.ifsp_end = raw_iep_info[4].text.strip()
         except AttributeError:
             pass
 
@@ -301,8 +301,8 @@ class ChildData:
             raw_iep_info = list(soup.find('table', {'id': 'phb_phb_grdIep'}).find_all('td'))
             if len(raw_iep_info) > 1:
                 self.iep_start = raw_iep_info[0].text.strip()
-                self.iep_active = raw_iep_info[2].text.strip()
-                self.iep_end = raw_iep_info[3].text.strip()
+                self.iep_active = raw_iep_info[3].text.strip()
+                self.iep_end = raw_iep_info[4].text.strip()
         except AttributeError:
             pass
 
@@ -457,10 +457,10 @@ class ChildData:
             'CHILD_DEVELOPMENT': {'ASQ': {'asq_date': self.asq_date, 'asq_result': self.asq_result,
                                           'asq_rescreen': self.asq_rescreen, 'asq_date_ee': self.asq_date_ee,
                                           'asq_result_ee': self.asq_result_ee, 'asq_rescreen_ee': self.asq_rescreen_ee},
-                                  'IFSP': {'ifsp_start': self.ifsp_start, 'ifsp_end': self.ifsp_end,
-                                          'ifsp_active': self.ifsp_active},
-                                  'IEP': {'iep_start': self.iep_start, 'iep_end': self.iep_end,
-                                          'iep_active': self.iep_active},
+                                  'IFSP': {'ifsp_active': self.ifsp_active, 'ifsp_start': self.ifsp_start, 
+                                          'ifsp_end': self.ifsp_end},
+                                  'IEP': {'iep_active': self.iep_active, 'iep_start': self.iep_start,
+                                           'iep_end': self.iep_end},
                                   'PT_CONFERENCE': self.pt_dict},
             'FAMILY_INFORMATION': {'HOME_VISITS': self.hv_dict,
                                    'MONTHLY_CONTACT': self.monthly_contact_dict},
