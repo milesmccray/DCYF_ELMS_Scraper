@@ -205,7 +205,7 @@ class ChildData:
 
         if de_date is None:
             try:
-                de_date = soup.find('span', {'id': 'phb_phb_lblDentalExamLastYear'}).text
+                de_date = soup.find('span', {'id': 'phb_phb_lblDentalExamLastYear'}).get('value')
             except AttributeError:
                 de_date = 'N/A'
 
